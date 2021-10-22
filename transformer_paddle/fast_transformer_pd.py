@@ -56,8 +56,9 @@ class FastAttention(nn.Layer):
 
     def forward(self, x, mask=None):
         n, device, h, use_rotary_emb = x.shape[1
-            ], x.device, self.heads, exists(self.pos_emb)
-        qkv = self.to_qkv(x).chunk(3, dim=-1)
+            ], x.place, self.heads, exists(self.pos_emb)
+        x = self.to_qkv(x)
+        qkv = x.chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
         mask_value = -np.finfo('float32').max
         mask = rearrange(mask, 'b n -> b () n')
@@ -122,10 +123,12 @@ class FastTransformer(nn.Layer):
     def forward(self, x, mask=None):
         n, device = x.shape[1], x.place
         x = self.token_emb(x)
+
         if exists(self.abs_pos_emb):
             # pos_emb = self.abs_pos_emb(paddle.arange(n).requires_grad_(False))
             pos_emb = self.abs_pos_emb(paddle.arange(n))
-            x = x + rearrange(pos_emb, 'n d -> () n d')
+            pos_emb_np = pos_emb.numpy()
+            x = x + paddle.to_tensor(rearrange(pos_emb_np, 'n d -> () n d'))
         for attn, ff in self.layers:
             x = attn(x, mask=mask) + x
             x = ff(x) + x

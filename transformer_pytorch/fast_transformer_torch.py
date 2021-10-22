@@ -75,7 +75,8 @@ class FastAttention(nn.Module):
     def forward(self, x, mask = None):
         n, device, h, use_rotary_emb = x.shape[1], x.device, self.heads, exists(self.pos_emb)
 
-        qkv = self.to_qkv(x).chunk(3, dim = -1)
+        x = self.to_qkv(x)
+        qkv = x.chunk(3, dim=-1)
         q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h = h), qkv)
 
         # mask_value = -torch.finfo(x.dtype).max # -3.4028

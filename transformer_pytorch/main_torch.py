@@ -2,6 +2,9 @@ import torch
 from transformer_pytorch import FastTransformer
 import numpy as np
 
+seed = 42
+torch.manual_seed(seed)
+
 model = FastTransformer(
     num_tokens = 20000,
     dim = 512,
