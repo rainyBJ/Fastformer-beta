@@ -16,10 +16,11 @@ model_dict = model.state_dict()
 torch_model_dict = paddle.load("paddle_init.pdparams")
 torch_model_dict = {k: v for k, v in torch_model_dict.items() if k in model_dict}
 model_dict.update(torch_model_dict)
-for key, param in model_dict.items():
-    print(key)
+# for key, param in model_dict.items():
+#     print(key)
 
 model.load_dict(model_dict)
+dict_loaded = model.state_dict()
 # 输入数据对齐
 x_np = np.load('../fake_data/x.npy')
 x = paddle.to_tensor(x_np)

@@ -58,10 +58,14 @@ class FastAttention(nn.Layer):
         n, device, h, use_rotary_emb = x.shape[1
             ], x.place, self.heads, exists(self.pos_emb)
         x = self.to_qkv(x)
-        qkv = x.chunk(3, dim=-1)
-        q, k, v = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv)
+        qkv = x.chunk(3, axis=-1)
+        qkv_np = (item.numpy() for item in qkv)
+        q_np, k_np, v_np = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv_np)
+        q = paddle.to_tensor(q_np)
+        k = paddle.to_tensor(k_np)
+        v = paddle.to_tensor(v_np)
         mask_value = -np.finfo('float32').max
-        mask = rearrange(mask, 'b n -> b () n')
+        mask = paddle.to_tensor(rearrange(mask.numpy(), 'b n -> b () n'))
         if use_rotary_emb:
             freqs = self.pos_emb(paddle.arange(self.max_seq_len).
                 requires_grad_(False), cache_key=self.max_seq_len)
