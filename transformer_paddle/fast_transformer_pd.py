@@ -74,27 +74,32 @@ class FastAttention(nn.Layer):
                 t), (q, k, v))
         else:
             q_aggr, k_aggr, v_aggr = q, k, v
-        q_attn_logits = rearrange(self.to_q_attn_logits(q), 'b h n () -> b h n'
-            ) * self.scale
-        q_attn_logits = q_attn_logits.masked_fill(~mask, mask_value)
-        q_attn = q_attn_logits.softmax(dim=-1)
+        q_attn_logits = paddle.to_tensor(rearrange(self.to_q_attn_logits(q).numpy(), 'b h n () -> b h n'
+                                                   )) * self.scale
+        # q_attn_logits = q_attn_logits.masked_fill(~mask, mask_value)
+        mask_value_pd = paddle.full(shape=[1, 8, 4096], fill_value=mask_value, dtype='float32')
+        mask_pd = mask.tile([1,8,1])
+        q_attn_logits = paddle.where(mask_pd==1,q_attn_logits,mask_value_pd)
+        q_attn = paddle.nn.functional.softmax(q_attn_logits,axis=-1)
+
         global_q = einsum('b h n, b h n d -> b h d', q_attn, q_aggr)
-        global_q = rearrange(global_q, 'b h d -> b h () d')
+        global_q = paddle.to_tensor(rearrange(global_q.numpy(), 'b h d -> b h () d'))
         k = k * global_q
         if use_rotary_emb:
             k = reduce(k, 'b h n (d r) -> b h n d', 'sum', r=2)
-        k_attn_logits = rearrange(self.to_k_attn_logits(k), 'b h n () -> b h n'
+        k_attn_logits = paddle.to_tensor(rearrange(self.to_k_attn_logits(k).numpy(), 'b h n () -> b h n')
             ) * self.scale
-        k_attn_logits = k_attn_logits.masked_fill(~mask, mask_value)
-        k_attn = k_attn_logits.softmax(dim=-1)
+        # k_attn_logits = k_attn_logits.masked_fill(~mask, mask_value)
+        k_attn_logits = paddle.where(mask_pd == 1, k_attn_logits, mask_value_pd)
+        k_attn = paddle.nn.functional.softmax(k_attn_logits,axis=-1)
         global_k = einsum('b h n, b h n d -> b h d', k_attn, k_aggr)
-        global_k = rearrange(global_k, 'b h d -> b h () d')
+        global_k = paddle.to_tensor(rearrange(global_k.numpy(), 'b h d -> b h () d'))
         u = v_aggr * global_k
         if use_rotary_emb:
             u = reduce(u, 'b h n (d r) -> b h n d', 'sum', r=2)
         r = self.to_r(u)
         r = r + q
-        r = rearrange(r, 'b h n d -> b n (h d)')
+        r = paddle.to_tensor(rearrange(r.numpy(), 'b h n d -> b n (h d)'))
         return self.to_out(r)
 
 

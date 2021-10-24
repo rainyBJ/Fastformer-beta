@@ -9,6 +9,20 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="root@10.106.128.108:18566 password (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/baidu/paddle/fast_transformer_pytorch" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="root@10.106.128.108:18566 password (2)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/root/baidu/paddle/fast_transformer_pytorch" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
     <option name="myAutoUpload" value="ALWAYS" />
   </component>

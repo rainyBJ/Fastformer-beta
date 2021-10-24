@@ -5,6 +5,9 @@ os.chdir("/root/baidu/paddle/fast_transformer_pytorch/transformer_paddle")
 import paddle
 from fast_transformer_pd import FastTransformer
 import numpy as np
+from reprod_log import ReprodLogger
+
+reprod_logger = ReprodLogger()
 
 seed = 42
 paddle.seed(seed)
@@ -27,4 +30,7 @@ x = paddle.to_tensor(x_np)
 mask_np= np.load('../fake_data/mask.npy')
 mask = paddle.to_tensor(mask_np)
 logits = model(x, mask=mask)
-print(logits)
+
+reprod_logger.add("logits", logits.cpu().detach().numpy())
+reprod_logger.save("forward_paddle.npy")
+

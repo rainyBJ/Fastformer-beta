@@ -1,7 +1,9 @@
 import torch
 from transformer_pytorch import FastTransformer
 import numpy as np
+from reprod_log import ReprodLogger
 
+reprod_logger = ReprodLogger()
 seed = 42
 torch.manual_seed(seed)
 
@@ -22,4 +24,6 @@ mask_np= np.load('../fake_data/mask.npy')
 mask = torch.from_numpy(mask_np).bool()
 
 logits = model(x, mask = mask) # (1, 4096, 20000)
-print(logits)
+
+reprod_logger.add("logits", logits.cpu().detach().numpy())
+reprod_logger.save("forward_torch.npy")
