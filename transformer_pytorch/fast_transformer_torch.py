@@ -6,6 +6,26 @@ import numpy as np
 from einops import rearrange, reduce
 from rotary_embedding_torch import apply_rotary_emb, RotaryEmbedding
 
+# attention pooling
+class AttentionPooling(nn.Module):
+    def __init__(self, hidden_size):
+        super(AttentionPooling, self).__init__()
+        self.att_fc1 = nn.Linear(hidden_size, hidden_size)
+        self.att_fc2 = nn.Linear(hidden_size, 1)
+
+    def forward(self, x, attn_mask=None):
+        bz = x.shape[0]
+        e = self.att_fc1(x)
+        e = nn.Tanh()(e)
+        alpha = self.att_fc2(e)
+        alpha = torch.exp(alpha)
+        if attn_mask is not None:
+            alpha = alpha * attn_mask.unsqueeze(2)
+        alpha = alpha / (torch.sum(alpha, dim=1, keepdim=True) + 1e-8)
+        x = torch.bmm(x.permute(0, 2, 1), alpha)
+        x = torch.reshape(x, (bz, -1))
+        return x
+
 # helper functions
 
 def exists(val):
@@ -158,9 +178,16 @@ class FastTransformer(nn.Module):
         heads = 8,
         dim_head = 64,
         ff_mult = 4,
-        absolute_pos_emb = False
+        absolute_pos_emb = False,
+        dropout = 0
     ):
         super().__init__()
+        self.dropout = nn.Dropout(dropout)
+
+        # self.linear = nn.Linear(dim, 5)
+
+        self.pooler = AttentionPooling(hidden_size = dim)
+
         self.token_emb = nn.Embedding(num_tokens, dim)
 
         # positional embeddings
@@ -194,10 +221,10 @@ class FastTransformer(nn.Module):
 
         # to logits
 
-        self.to_logits = nn.Sequential(
-            nn.LayerNorm(dim),
-            nn.Linear(dim, num_tokens)
-        )
+        # self.to_logits = nn.Sequential(
+        #     nn.LayerNorm(dim),
+        #     nn.Linear(dim, num_tokens)
+        # )
 
     def forward(
         self,
@@ -215,4 +242,8 @@ class FastTransformer(nn.Module):
             x = attn(x, mask = mask) + x
             x = ff(x) + x
 
-        return self.to_logits(x)
+        # 加入 dropout 和 pooling 并输出
+        x = self.dropout(x)
+        x = self.pooler(x)
+
+        return x

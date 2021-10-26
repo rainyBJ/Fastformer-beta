@@ -3,6 +3,7 @@ from transformer_pytorch import FastTransformer
 import numpy as np
 from reprod_log import ReprodLogger
 
+
 reprod_logger = ReprodLogger()
 seed = 42
 torch.manual_seed(seed)
@@ -16,6 +17,8 @@ model = FastTransformer(
 )
 
 model_dict = model.state_dict()
+# for key, param in model_dict.items():
+#     print(key)
 torch.save(model_dict,"torch_init.pth")
 
 x_np = np.load('../fake_data/x.npy')

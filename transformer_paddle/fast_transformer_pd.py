@@ -9,6 +9,7 @@ from rotary_embedding_torch import apply_rotary_emb
 from rotary_embedding_torch import RotaryEmbedding
 
 
+
 def exists(val):
     return val is not None
 
@@ -33,6 +34,26 @@ def FeedForward(dim, mult=4):
     return nn.Sequential(nn.Linear(dim, dim * mult), nn.GELU(), nn.Linear(
         dim * mult, dim))
 
+# attention pooling
+class AttentionPooling(nn.Layer):
+    def __init__(self, hidden_size):
+        super(AttentionPooling, self).__init__()
+        self.att_fc1 = nn.Linear(hidden_size, hidden_size)
+        self.att_fc2 = nn.Linear(hidden_size, 1)
+
+    def forward(self, x, attn_mask=None):
+        bz = x.shape[0]
+        e = self.att_fc1(x)
+        e = nn.Tanh()(e)
+        alpha = self.att_fc2(e)
+        alpha = paddle.exp(alpha)
+        if attn_mask is not None:
+            alpha = alpha * attn_mask.unsqueeze(2)
+        alpha = alpha / (paddle.sum(alpha, axis=1, keepdim=True) + 1e-8)
+        x = paddle.to_tensor(x.numpy().transpose(0, 2, 1))
+        x = paddle.bmm(x, alpha)
+        x = paddle.reshape(x, (bz, -1))
+        return x
 
 class FastAttention(nn.Layer):
 
@@ -77,7 +98,7 @@ class FastAttention(nn.Layer):
         q_attn_logits = paddle.to_tensor(rearrange(self.to_q_attn_logits(q).numpy(), 'b h n () -> b h n'
                                                    )) * self.scale
         # q_attn_logits = q_attn_logits.masked_fill(~mask, mask_value)
-        mask_value_pd = paddle.full(shape=[1, 8, 4096], fill_value=mask_value, dtype='float32')
+        mask_value_pd = paddle.full(shape=q_attn_logits.shape, fill_value=mask_value, dtype='float32')
         mask_pd = mask.tile([1,8,1])
         q_attn_logits = paddle.where(mask_pd==1,q_attn_logits,mask_value_pd)
         q_attn = paddle.nn.functional.softmax(q_attn_logits,axis=-1)
@@ -106,8 +127,10 @@ class FastAttention(nn.Layer):
 class FastTransformer(nn.Layer):
 
     def __init__(self, *, num_tokens, dim, depth, max_seq_len, heads=8,
-        dim_head=64, ff_mult=4, absolute_pos_emb=False):
+        dim_head=64, ff_mult=4, absolute_pos_emb=False, dropout=0):
         super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.pooler = AttentionPooling(hidden_size=dim)
         self.token_emb = nn.Embedding(num_tokens, dim)
         self.abs_pos_emb = nn.Embedding(max_seq_len, dim
             ) if absolute_pos_emb else None
@@ -126,8 +149,8 @@ class FastTransformer(nn.Layer):
         for block, _ in self.layers[1:]:
             block.fn.to_q_attn_logits = first_block.fn.to_q_attn_logits
             block.fn.to_k_attn_logits = first_block.fn.to_k_attn_logits
-        self.to_logits = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim,
-            num_tokens))
+        # self.to_logits = nn.Sequential(nn.LayerNorm(dim), nn.Linear(dim,
+        #     num_tokens))
 
     def forward(self, x, mask=None):
         n, device = x.shape[1], x.place
@@ -141,4 +164,7 @@ class FastTransformer(nn.Layer):
         for attn, ff in self.layers:
             x = attn(x, mask=mask) + x
             x = ff(x) + x
-        return self.to_logits(x)
+        # 加入 dropout 和 pooling 并输出
+        x = self.dropout(x)
+        x = self.pooler(x)
+        return x
