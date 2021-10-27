@@ -50,7 +50,7 @@ class AttentionPooling(nn.Layer):
         if attn_mask is not None:
             alpha = alpha * attn_mask.unsqueeze(2)
         alpha = alpha / (paddle.sum(alpha, axis=1, keepdim=True) + 1e-8)
-        x = paddle.to_tensor(x.numpy().transpose(0, 2, 1))
+        x = paddle.transpose(x, (0, 2, 1))
         x = paddle.bmm(x, alpha)
         x = paddle.reshape(x, (bz, -1))
         return x

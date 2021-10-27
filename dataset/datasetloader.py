@@ -18,7 +18,7 @@ totoal_index = range(1689188)
 subset_index = random.sample(totoal_index, 50000)
 
 # 数据集
-data_path = "../../dataset/reviews_Electronics_5.json.gz"
+data_path = "reviews_Electronics_5.json.gz"
 review_text = []
 review_rating = []
 def parse(path):
@@ -61,6 +61,6 @@ data = np.array(news_words, dtype='int32')
 label = np.array(review_rating, dtype='int32')
 
 # save it to .npy files
-np.save("../dataset/data.npy",data)
-np.save("../dataset/label.npy",label)
-np.save("../dataset/num_tokens",len(word_dict))
+np.save("data.npy",data)
+np.save("label.npy",label)
+np.save("num_tokens",len(word_dict))
