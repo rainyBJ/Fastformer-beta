@@ -11,11 +11,12 @@ import numpy as np
 
 # 10万的数据量
 # construct sub_dataset 50k: 40k train; 5k val; 5k test
-import random
-seed = 42
-random.seed(seed)
-totoal_index = range(1689188)
-subset_index = random.sample(totoal_index, 50000)
+# 类别不均衡，换一个产生数据集的逻辑
+# import random
+# seed = 42
+# random.seed(seed)
+# totoal_index = range(1689188)
+# subset_index = random.sample(totoal_index, 50000)
 
 # 数据集
 data_path = "reviews_Electronics_5.json.gz"
@@ -26,20 +27,67 @@ def parse(path):
   for l in g:
     yield eval(l)
 
-# using first 20 as an example
-cnt = -1
+# count for 5 classes, 8k for each; train data
+item_num = 8e3
+val_start = 1
+cnt_0,cnt_1,cnt_2,cnt_3,cnt_4 = 0,0,0,0,0
+cnt = 0
 for item in parse(data_path):
+    if cnt < 4e4: # train set
+        label = item["overall"]-1
+        if item["overall"]-1 == 0:
+            if cnt_0 == item_num:
+                continue
+            cnt_0 = cnt_0 + 1
+        elif item["overall"]-1 == 1:
+            if cnt_1 == item_num:
+                continue
+            cnt_1 = cnt_1 + 1
+        elif item["overall"]-1 == 2:
+            if cnt_2 == item_num:
+                continue
+            cnt_2 = cnt_2 + 1
+        elif item["overall"]-1 == 3:
+            if cnt_3 == item_num:
+                continue
+            cnt_3 = cnt_3 + 1
+        elif item["overall"]-1 == 4:
+            if cnt_4 == item_num:
+                continue
+            cnt_4 = cnt_4 + 1
+    else:
+        if val_start:
+            cnt_0, cnt_1, cnt_2, cnt_3, cnt_4 = 0, 0, 0, 0, 0
+            item_num = 1e3
+            val_start = 0
+        else:
+            pass
+        if cnt_0==item_num and cnt_1==item_num and cnt_2==item_num and cnt_3==item_num and cnt_4==item_num:
+            break
+        label = item["overall"]-1
+        if item["overall"]-1 == 0:
+            if cnt_0 == item_num:
+                continue
+            cnt_0 = cnt_0 + 1
+        if item["overall"]-1 == 1:
+            if cnt_1 == item_num:
+                continue
+            cnt_1 = cnt_1 + 1
+        if item["overall"]-1 == 2:
+            if cnt_2 == item_num:
+                continue
+            cnt_2 = cnt_2 + 1
+        if item["overall"]-1 == 3:
+            if cnt_3 == item_num:
+                continue
+            cnt_3 = cnt_3 + 1
+        if item["overall"]-1 == 4:
+            if cnt_4 == item_num:
+                continue
+            cnt_4 = cnt_4 + 1
     cnt = cnt + 1
-    if cnt not in subset_index:
-        continue
     review_text.append(wordpunct_tokenize(item["reviewText"]))
-    review_rating.append(item["overall"]-1)
-
-# train_num; test num; val_num
-total_num = len(review_rating)
-train_num = int(total_num * 0.8) #40k
-val_num = int(total_num * 0.1) #5k
-test_num = int(total_num * 0.1) #5k
+    review_rating.append(label)
 
 # construct word_dict
 word_dict = {'PADDING': 0}

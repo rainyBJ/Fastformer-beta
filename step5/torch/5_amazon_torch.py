@@ -17,21 +17,61 @@ num_tokens = int(np.load("../../dataset/num_tokens.npy"))
 # model_initial and export params
 model = Model()
 state_dict = model.state_dict()
-# torch.save(state_dict,'initial_torch.pth')
+torch.save(state_dict,'initial_torch.pth')
 
 # 优化器
 optimizer = optim.Adam([{'params': model.parameters(), 'lr': 1e-3}])
 
 model = model.cuda()
 
-# split dataset
+# split dataset 8:1
 total_num = int(len(label))
-train_num = int(total_num * 0.8)
-val_num = int(total_num * 0.9)
+train_num = int(total_num / 9 * 8)
+val_num = int(total_num / 9 * 9)
 index = np.arange(total_num)
 train_index = index[:train_num]
 val_index = index[train_num:val_num]
-test_index = index[val_num:]
+
+# # 统计数据分布
+# train_label = label[train_index]
+# val_label = label[val_index]
+# cnt_0 = 0
+# cnt_1 = 0
+# cnt_2 = 0
+# cnt_3 = 0
+# cnt_4 = 0
+# for item in train_label:
+#     if item == 0:
+#         cnt_0 = cnt_0 + 1
+#     elif item == 1:
+#         cnt_1 = cnt_1 + 1
+#     elif item == 2:
+#         cnt_2 = cnt_2 + 1
+#     elif item == 3:
+#         cnt_3 = cnt_3 + 1
+#     elif item == 4:
+#         cnt_4 = cnt_4 + 1
+# print("")
+# print("Train:")
+# print(cnt_0,cnt_1,cnt_2,cnt_3,cnt_4)
+# cnt_0 = 0
+# cnt_1 = 0
+# cnt_2 = 0
+# cnt_3 = 0
+# cnt_4 = 0
+# for item in val_label:
+#     if item == 0:
+#         cnt_0 = cnt_0 + 1
+#     elif item == 1:
+#         cnt_1 = cnt_1 + 1
+#     elif item == 2:
+#         cnt_2 = cnt_2 + 1
+#     elif item == 3:
+#         cnt_3 = cnt_3 + 1
+#     elif item == 4:
+#         cnt_4 = cnt_4 + 1
+# print("Val:")
+# print(cnt_0,cnt_1,cnt_2,cnt_3,cnt_4)
 
 epochs = 3
 with open('log_torch.txt','w') as f:

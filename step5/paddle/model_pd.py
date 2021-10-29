@@ -4,12 +4,12 @@ import paddle
 
 # model
 model = FastTransformer(
-    num_tokens = 82780,
+    num_tokens = 77053,
     dim = 512,
     depth = 2,
     max_seq_len = 512,
     absolute_pos_emb = True,
-    dropout=0 # default uses relative positional encoding, but if that isn't working, then turn on absolute positional embedding by setting this to True
+    dropout=0.2 # default uses relative positional encoding, but if that isn't working, then turn on absolute positional embedding by setting this to True
 )
 
 class Model(nn.Layer):

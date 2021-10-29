@@ -35,12 +35,11 @@ optimizer = optim.Adam(parameters=model.parameters(),learning_rate=1e-3)
 
 # split dataset
 total_num = int(len(label))
-train_num = int(total_num * 0.8)
-val_num = int(total_num * 0.9)
+train_num = int(total_num / 9 * 8)
+val_num = int(total_num / 9 * 9)
 index = np.arange(total_num)
 train_index = index[:train_num]
 val_index = index[train_num:val_num]
-test_index = index[val_num:]
 
 epochs = 3
 with open('log_pd.txt','w') as f:
