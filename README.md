@@ -8,14 +8,21 @@
   - [x] 模型输入对齐，生成 fake_data
   - [x] 模型初始化对齐
   - [x] 模型前向传播对齐
+  
 - [x] step3 模型在训练数据上 loss、criterion 对齐
   - [x] 输入数据对齐
   - [x] 参数对齐
   - [x] 指标对齐
-- [ ] step5 模型训练
+  
+- [ ] Step 4 反向对齐
+
+  - 基本上能对齐，最后一个 linear 层 bias 更新有问题
+
+  - 前五个 step，loss 的 averge diff 为 10e-3 量级
+
+- [x] step5 模型训练
   - [x] 输入数据集对齐
-  - [x] 模型初始化对齐
-  - [ ] 反向传播对齐
+  - [x] 模型初始化对齐 
   - [x] MacoF达到论文指标
 
 ## 文件结构
@@ -26,49 +33,85 @@ fast-transformer-pytorch-main
 ├─ README.md
 ├─ chkpt_initial
 │    └─ chkpt_convert.py
+├─ dataset
+│    └─ datasetloader.py
 ├─ fake_data
-│    └─ gen_fake_data.py
+│    ├─ gen_fake_data.py
+│    ├─ mask.npy
+│    └─ x.npy
 ├─ fast-transformer.png
 ├─ pics
 │    ├─ debug.png
 │    ├─ image-20211024144240527.png
 │    ├─ image-20211024144336758.png
+│    ├─ 反向对齐1.png
+│    ├─ 反向对齐2.png
 │    └─ 超惨设置.png
 ├─ setup.py
 ├─ step1
-│    └─ check_step1.py
+│    ├─ check_step1.py
+│    ├─ chkpt_convert_initial.py
+│    ├─ forward_diff.log
+│    ├─ paddle
+│    │    ├─ fast_transformer_pd.py
+│    │    └─ pd_forward.py
+│    └─ torch
+│           ├─ fast_transformer_torch.py
+│           └─ torch_forward.py
+├─ step3
+│    ├─ best_val.log
+│    ├─ check_step3.py
+│    ├─ chkpt_convert_best_val.py
+│    ├─ paddle
+│    │    ├─ amazon_pd.py
+│    │    ├─ criterion_pd.py
+│    │    ├─ fast_transformer_pd.py
+│    │    └─ model_pd.py
+│    └─ torch
+│           ├─ amazon_torch.py
+│           ├─ criterion_torch.py
+│           ├─ fast_transformer_torch.py
+│           └─ model_torch.py
+├─ step4
+│    ├─ check_step4.py
+│    ├─ loss_check.log
+│    ├─ paddle
+│    │    ├─ 4_amazon_pd.py
+│    │    ├─ 4_step_loss_pd.npy
+│    │    ├─ criterion_pd.py
+│    │    ├─ fast_transformer_pd.py
+│    │    └─ model_pd.py
+│    └─ torch
+│           ├─ 4_amazon_torch.py
+│           ├─ 4_step_loss_torch.npy
+│           ├─ criterion_torch.py
+│           ├─ fast_transformer_torch.py
+│           └─ model_torch.py
 ├─ step5
-│    ├─ amazon_pd.py
-│    ├─ amazon_torch.py
-│    └─ datasetloader.py
-├─ test.py
-├─ transformer_paddle
-│    ├─ __init__.py
-│    ├─ fast_transformer_pd.py
-│    └─ main_pd.py
-└─ transformer_pytorch
-       ├─ .ipynb_checkpoints
-       │    └─ fast_transformer_pytorch-checkpoint.py
-       ├─ __init__.py
-       ├─ fast_transformer_torch.py
-       └─ main_torch.py
+│    ├─ paddle
+│    │    ├─ 5_amazon_pd.py
+│    │    ├─ criterion_pd.py
+│    │    ├─ fast_transformer_pd.py
+│    │    ├─ log_pd.txt
+│    │    └─ model_pd.py
+│    └─ torch
+│           ├─ 5_amazon_torch.py
+│           ├─ criterion_torch.py
+│           ├─ fast_transformer_torch.py
+│           ├─ log_torch.txt
+│           └─ model_torch.py
+└─ test.py
 ```
 
 - pics 存放图片
-- chkpt_initial 模型初始化对齐
-- fake_data 模型输入对齐
+- chkpt_initial 参数转换
+- dataset 随机生成 50k 训练集，5k 测试集数据
+- fake_data 产生模型输入
 - setup.py 依赖环境
 - **step1** 模型结构对齐
-- **step5** 反向传播对齐
-  - datasetloader.py 加载数据集到 .npy 文件中
-  - amazon_torch.py 文本分类PyTorch实现
-  - amazon_paddle.py 文本分类Paddle实现
-- **transformer_paddle** 
-  - fast_transformer_pd.py 待转换 paddle 代码
-  - main_pd.py 顶层测试用，其中路径需改动
-- transformer_pytorch 
-  - fast_transformer_torch.py 原 torch 代码
-  - main_torch.py 顶层测试用，其中路径需改动
+- **step3** 验证集上指标对齐
+- **step4** 反向对齐
+- **step5** 训练对齐
 
 ## 问题
 
