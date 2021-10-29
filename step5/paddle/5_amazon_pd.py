@@ -65,14 +65,14 @@ with open('log_pd.txt','w') as f:
             optimizer.step()
             # 打印梯度
             # for name, tensor in model.named_parameters():
-                # grad = tensor.grad
-                # print(name)
-                # try:
-                #     print(grad.shape)
-                #     print(grad)
-                #     print(10*"*")
-                # except:
-                #     print(10 * "*")
+            #     grad = tensor.grad
+            #     print(name)
+            #     try:
+            #         print(grad.shape)
+            #         print(grad)
+            #         print(10*"*")
+            #     except:
+            #         print(10 * "*")
             if cnt % 10 == 0:
                 print(
                     ' Ed: {}, train_loss: {:.5f}, acc: {:.5f}'.format(cnt * 64, loss / (cnt + 1), accuary / (cnt + 1))

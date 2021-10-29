@@ -57,7 +57,6 @@ with open('log_torch.txt','w') as f:
 
             # 打印梯度
             # for name, tensor in model.named_parameters():
-            # for name, tensor in model.named_parameters():
             #     grad = tensor.grad
             #     print(name)
             #     try:

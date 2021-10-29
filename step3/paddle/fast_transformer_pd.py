@@ -80,13 +80,21 @@ class FastAttention(nn.Layer):
             ], x.place, self.heads, exists(self.pos_emb)
         x = self.to_qkv(x)
         qkv = x.chunk(3, axis=-1)
-        qkv_np = (item.numpy() for item in qkv)
-        q_np, k_np, v_np = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv_np)
-        q = paddle.to_tensor(q_np)
-        k = paddle.to_tensor(k_np)
-        v = paddle.to_tensor(v_np)
+        # qkv_np = (item.numpy() for item in qkv)
+        # q_np, k_np, v_np = map(lambda t: rearrange(t, 'b n (h d) -> b h n d', h=h), qkv_np)
+        # q = paddle.to_tensor(q_np)
+        # k = paddle.to_tensor(k_np)
+        # v = paddle.to_tensor(v_np)
+        q = qkv[0]
+        k = qkv[1]
+        v = qkv[2]
+        q = paddle.transpose(paddle.reshape(q,[q.shape[0],q.shape[1],h,-1]),[0,2,1,3])
+        k = paddle.transpose(paddle.reshape(k, [k.shape[0], k.shape[1], h, -1]), [0, 2, 1, 3])
+        v = paddle.transpose(paddle.reshape(v, [v.shape[0], v.shape[1], h, -1]), [0, 2, 1, 3])
+
         mask_value = -np.finfo('float32').max
-        mask = paddle.to_tensor(rearrange(mask.numpy(), 'b n -> b () n'))
+        # mask = paddle.to_tensor(rearrange(mask.numpy(), 'b n -> b () n'))
+        mask = paddle.unsqueeze(mask, 1)
         if use_rotary_emb:
             freqs = self.pos_emb(paddle.arange(self.max_seq_len).
                 requires_grad_(False), cache_key=self.max_seq_len)
@@ -95,8 +103,9 @@ class FastAttention(nn.Layer):
                 t), (q, k, v))
         else:
             q_aggr, k_aggr, v_aggr = q, k, v
-        q_attn_logits = paddle.to_tensor(rearrange(self.to_q_attn_logits(q).numpy(), 'b h n () -> b h n'
-                                                   )) * self.scale
+        # q_attn_logits = paddle.to_tensor(rearrange(self.to_q_attn_logits(q).numpy(), 'b h n () -> b h n'
+        #                                            )) * self.scale
+        q_attn_logits = paddle.squeeze(self.to_q_attn_logits(q),3) * self.scale
         # q_attn_logits = q_attn_logits.masked_fill(~mask, mask_value)
         mask_value_pd = paddle.full(shape=q_attn_logits.shape, fill_value=mask_value, dtype='float32')
         mask_pd = mask.tile([1,8,1])
@@ -104,23 +113,28 @@ class FastAttention(nn.Layer):
         q_attn = paddle.nn.functional.softmax(q_attn_logits,axis=-1)
 
         global_q = einsum('b h n, b h n d -> b h d', q_attn, q_aggr)
-        global_q = paddle.to_tensor(rearrange(global_q.numpy(), 'b h d -> b h () d'))
+        # global_q = paddle.to_tensor(rearrange(global_q.numpy(), 'b h d -> b h () d'))
+        global_q = paddle.unsqueeze(global_q,2)
         k = k * global_q
         if use_rotary_emb:
             k = reduce(k, 'b h n (d r) -> b h n d', 'sum', r=2)
-        k_attn_logits = paddle.to_tensor(rearrange(self.to_k_attn_logits(k).numpy(), 'b h n () -> b h n')
-            ) * self.scale
+        # k_attn_logits = paddle.to_tensor(rearrange(self.to_k_attn_logits(k).numpy(), 'b h n () -> b h n')
+        #     ) * self.scale
+        k_attn_logits = paddle.squeeze(self.to_k_attn_logits(k),3) * self.scale
         # k_attn_logits = k_attn_logits.masked_fill(~mask, mask_value)
         k_attn_logits = paddle.where(mask_pd == 1, k_attn_logits, mask_value_pd)
         k_attn = paddle.nn.functional.softmax(k_attn_logits,axis=-1)
         global_k = einsum('b h n, b h n d -> b h d', k_attn, k_aggr)
-        global_k = paddle.to_tensor(rearrange(global_k.numpy(), 'b h d -> b h () d'))
+        # global_k = paddle.to_tensor(rearrange(global_k.numpy(), 'b h d -> b h () d'))
+        global_k = paddle.unsqueeze(global_k,2)
         u = v_aggr * global_k
         if use_rotary_emb:
             u = reduce(u, 'b h n (d r) -> b h n d', 'sum', r=2)
         r = self.to_r(u)
         r = r + q
-        r = paddle.to_tensor(rearrange(r.numpy(), 'b h n d -> b n (h d)'))
+        # r = paddle.to_tensor(rearrange(r.numpy(), 'b h n d -> b n (h d)'))
+        r = paddle.transpose(r,[0,2,1,3])
+        r = paddle.reshape(r,[r.shape[0], r.shape[1],-1])
         return self.to_out(r)
 
 
@@ -159,8 +173,8 @@ class FastTransformer(nn.Layer):
         if exists(self.abs_pos_emb):
             # pos_emb = self.abs_pos_emb(paddle.arange(n).requires_grad_(False))
             pos_emb = self.abs_pos_emb(paddle.arange(n))
-            pos_emb_np = pos_emb.numpy()
-            x = x + paddle.to_tensor(rearrange(pos_emb_np, 'n d -> () n d'))
+            foo = paddle.reshape(pos_emb, [-1,pos_emb.shape[0],pos_emb.shape[1]])
+            x = x + foo
         for attn, ff in self.layers:
             x = attn(x, mask=mask) + x
             x = ff(x) + x

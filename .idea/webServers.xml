@@ -9,6 +9,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="209efa9a-17d2-4701-9cb1-b206750615dd" name="carbon">
+        <fileTransfer accessType="SFTP" sshConfigId="b2814ff0-3143-41ec-b8d3-278dad2d0768" sshConfig="root@10.106.128.107:11909 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>
