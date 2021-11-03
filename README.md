@@ -2,8 +2,6 @@
 
 ## TD
 
-[paddle 复现论文参考 repo](https://github.com/PaddlePaddle/models/blob/develop/docs/ThesisReproduction_CV.md)
-
 - [x] step1 模型结构对齐
   - [x] 模型输入对齐，生成 fake_data
   - [x] 模型初始化对齐
@@ -117,16 +115,18 @@ fast-transformer-pytorch-main
 
 ## 问题
 
-###### 网络最后一层梯度对齐
+### 网络最后一层梯度对齐
+
+**怀疑是 paddle 的 bug，实际上对齐了但是显示错误**
 
 - bias 不可
 - weight 可以
 
-###### 环境
+### 环境
 
 - 模型参数对齐、输入数据对齐、dropout为0、参数初始化（直接导入了PyTorch中的初始化参数）
 
-###### 差异
+### 差异
 
 Torch
 
@@ -146,84 +146,30 @@ Amazon Electronic Review Rating Classification
 - 5k eval
 - 5k test
 
-参考链接：https://github.com/wuch15/Fastformer
-
-## debug
-
-debug 视图
-
-- 设置断点，看对应变量、运算过程是否相同
-
-![debug](pics/debug.png)
-
-
-
-# 论文
-
-实验设置
-
-![image-20211024144120831](pics/超惨设置.png)
-
-情感主题分类
+### 情感主题分类
 
 - F1
 
 ![image-20211024144240527](pics/image-20211024144240527.png)
 
-文本概括
 
-- R-L
 
-![image-20211024144336758](pics/image-20211024144336758.png)
+## 论文
 
-# 原 repo
+### 网络结构
 
 <img src="./fast-transformer.png" width="400px"></img>
 
-## Fast Transformer - Pytorch
+### 实验设置
 
-Implementation of <a href="https://arxiv.org/abs/2108.09084">Fast Transformer</a> in Pytorch. This only work as an encoder.
+![image-20211024144120831](pics/超惨设置.png)
 
-<a href="https://www.youtube.com/watch?v=qgUegkefocg">Yannic video</a>
+## AI Studio 项目链接
 
-<a href="https://www.youtube.com/watch?v=Ich5TIvdYRE">AI Epiphany</a>
+https://aistudio.baidu.com/aistudio/projectdetail/2559430?shared=1
 
-## Install
+## 参考 repo
 
-```bash
-$ pip install fast-transformer-pytorch
-```
+- https://github.com/wilile26811249/Fastformer-PyTorch
 
-## Usage
-
-```python
-import torch
-from transformer_pytorch import FastTransformer
-
-model = FastTransformer(
-    num_tokens=20000,
-    dim=512,
-    depth=2,
-    max_seq_len=4096,
-    absolute_pos_emb=True
-    # default uses relative positional encoding, but if that isn't working, then turn on absolute positional embedding by setting this to True
-)
-
-x = torch.randint(0, 20000, (1, 4096))
-mask = torch.ones(1, 4096).bool()
-
-logits = model(x, mask=mask)  # (1, 4096, 20000)
-```
-
-## Citations
-
-```bibtex
-@misc{wu2021fastformer,
-    title   = {Fastformer: Additive Attention is All You Need}, 
-    author  = {Chuhan Wu and Fangzhao Wu and Tao Qi and Yongfeng Huang},
-    year    = {2021},
-    eprint  = {2108.09084},
-    archivePrefix = {arXiv},
-    primaryClass = {cs.CL}
-}
-```
+- https://github.com/wuch15/Fastformer
